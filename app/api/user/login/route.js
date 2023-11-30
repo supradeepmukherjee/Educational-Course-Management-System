@@ -9,16 +9,16 @@ export async function POST(req) {
     try {
         connectDB()
         const res = await req.json()
-        const { name, email, password, chavi } = res
-        if (!name || !email || !password || !chavi) return Response.json({ msg: 'All fields are mandatory' }, { status: 400 })
-        const exists = await User.findOne({ email })
-        if (exists) return Response.json({ msg: 'Already Registered' }, { status: 400 })
-        const hashed = await bcrypt.hash(password, 10)
-        const user = await User.create({ name, email, password: hashed, chavi })
+        const { email, password } = res
+        if (!email || !password) return Response.json({ msg: 'Email and Password Required' }, { status: 400 })
+        const user = await User.findOne({ email }).select('+password')
+        if (!user) return Response.json({ msg: 'Email or Password is Incorrect' }, { status: 401 })
+        const matched = await bcrypt.compare(password, user.password)
+        if (!matched) return Response.json({ msg: 'Email or Password is Incorrect' }, { status: 401 })
         const token = jwt.sign({ token: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' })
         cookies().set('user', token)
         await redis.set(user._id, user)
-        return Response.json({ user, token }, { status: 201 })
+        return Response.json({ user }, { status: 200 })
     } catch (err) {
         console.log(err)
         return Response.json({ err }, { status: 500 })
