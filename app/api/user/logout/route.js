@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 export async function GET(req) {
     try {
         cookies().delete('user')
-        await redis.del(jwt.verify(req.cookies.get('user').value, process.env.JWT_SECRET).token)
+        // await redis.del()
         return Response.json({ msg: 'Logged Out Successfully' }, { status: 200 })
     } catch (err) {
         console.log(err)
